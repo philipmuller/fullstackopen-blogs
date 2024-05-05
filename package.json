@@ -1,0 +1,35 @@
+{
+  "name": "fullstackopen-blogs",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "build:ui": "rm -rf dist && cd ../fullstackopen/Part2/phonebook/ && npm run build && cp -r dist ../../../fullstackopen-server",
+    "deploy": "fly deploy",
+    "deploy:full": "npm run build:ui && npm run deploy",
+    "logs:prod": "fly logs",
+    "lint": "eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/philipmuller/fullstackopen-blogs.git"
+  },
+  "author": "Philip Muller",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/philipmuller/fullstackopen-blogs/issues"
+  },
+  "homepage": "https://github.com/philipmuller/fullstackopen-blogs#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.3.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

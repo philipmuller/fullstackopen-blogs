@@ -56,7 +56,6 @@ describe("Server", () => {
         assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1)
 
         const addedBlog = blogsAtEnd[blogsAtEnd.length - 1]
-        console.log(addedBlog)
         assert.deepStrictEqual(addedBlog, { ...newBlog, id: addedBlog.id })
     })
 
@@ -126,6 +125,54 @@ describe("Server", () => {
     
         const contents = blogs.map(e => e.title)
         assert(contents.includes('How I lost my mind writing my thesis'), true)
+    })
+
+    test("retreiving a specific blog by ID works", async () => {
+        const blogs = await helper.blogsInDb()
+        const blog = blogs[0]
+
+        const result = await api
+            .get(`/api/blogs/${blog.id}`)
+            .expect(200)
+            .expect('Content-Type', /application\/json/)
+
+        assert.deepStrictEqual(result.body, blog)
+    })
+
+    test("deleting a blog by ID works", async () => {
+        const blogs = await helper.blogsInDb()
+        const blog = blogs[0]
+
+        await api
+            .delete(`/api/blogs/${blog.id}`)
+            .expect(204)
+
+        const blogsAtEnd = await helper.blogsInDb()
+        assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length - 1)
+
+        const contents = blogsAtEnd.map(e => e.title)
+        assert(!contents.includes(blog.title))
+    })
+
+    test("updating a blog by ID works", async () => {
+        const blogs = await helper.blogsInDb()
+        const blog = blogs[0]
+
+        const updatedBlog = {
+            title: "Updated title",
+            author: "Updated author",
+            url: "https://www.updatedurl.com",
+            likes: 789
+        }
+
+        await api
+            .put(`/api/blogs/${blog.id}`)
+            .send(updatedBlog)
+            .expect(200)
+
+        const blogAtTheEnd = await helper.blogInDb(blog.id)
+
+        assert.deepStrictEqual(blogAtTheEnd, {...updatedBlog, id: blog.id})
     })
 
 })

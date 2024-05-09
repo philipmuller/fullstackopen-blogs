@@ -4,7 +4,7 @@ const User = require('../models/user')
 const bcrypt = require('bcrypt')
 
 usersRouter.get('/', async (request, response) => {
-    const users = await User.find({})
+    const users = await User.find({}).populate('blogs')
     const usersJson = users.map(user => {
         const userJson = user.toJSON()
         delete userJson.password
@@ -15,11 +15,11 @@ usersRouter.get('/', async (request, response) => {
 })
 
 usersRouter.post('/', async (request, response) => {
-    const { username, name, password } = request.body
+    const { username, name, password, blogs } = request.body
 
     if (!password) { return response.status(400).json({ error: 'password missing' }) }
     if (password.length < 3) { return response.status(400).json({ error: 'password too short' }) }
-    
+
     if (!username) { return response.status(400).json({ error: 'username missing' }) }
     if (username.length < 3) { return response.status(400).json({ error: 'username too short' }) }
     
@@ -30,6 +30,7 @@ usersRouter.post('/', async (request, response) => {
       username,
       name,
       password: encryptedPassword,
+      blogs: blogs || []
     })
   
     const savedUser = await user.save()

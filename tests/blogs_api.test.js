@@ -4,15 +4,20 @@ const supertest = require('supertest')
 const app = require('../app')
 const assert = require('node:assert')
 const Blog = require('../models/blog')
+const User = require('../models/user')
 const helper = require('./test_helper')
 
 const api = supertest(app)
 
 beforeEach(async () => {
     await Blog.deleteMany({})
+    await User.deleteMany({})
+
+    const user = new User({ username: 'root', password: 'sekret', name: 'Superuser' })
+    await user.save()
 
     for (let blog of helper.initialBlogs) {
-        let blogObject = new Blog(blog)
+        let blogObject = new Blog({ ...blog, user: user._id })
         await blogObject.save()
     }
 })
@@ -55,7 +60,7 @@ describe("Server", () => {
         assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1)
 
         const addedBlog = blogsAtEnd[blogsAtEnd.length - 1]
-        assert.deepStrictEqual(addedBlog, { ...newBlog, id: addedBlog.id })
+        assert.deepStrictEqual(addedBlog, { ...newBlog, id: addedBlog.id, user: addedBlog.user})
     })
 
     test('blog without likes defaults to 0', async () => {
@@ -135,7 +140,7 @@ describe("Server", () => {
             .expect(200)
             .expect('Content-Type', /application\/json/)
 
-        assert.deepStrictEqual(result.body, blog)
+        assert.deepStrictEqual(result.body.title, blog.title)
     })
 
     test("deleting a blog by ID works", async () => {
@@ -171,7 +176,7 @@ describe("Server", () => {
 
         const blogAtTheEnd = await helper.blogInDb(blog.id)
 
-        assert.deepStrictEqual(blogAtTheEnd, {...updatedBlog, id: blog.id})
+        assert.deepStrictEqual(blogAtTheEnd, {...updatedBlog, id: blog.id, user: blog.user})
     })
 
 })

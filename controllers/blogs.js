@@ -1,9 +1,11 @@
 const logger = require('../util/logger')
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
 blogsRouter.get('/', async (request, response) => {
-  const blogs = await Blog.find({})
+  const blogs = await Blog.find({}).populate('user', { username: 1, name: 1 })
+
   response.json(blogs)
 })
   
@@ -28,7 +30,18 @@ blogsRouter.put('/:id', async (request, response) => {
 })
 
 blogsRouter.post('/', async (request, response) => {
-    let blog = new Blog(request.body)
+
+    const users = await User.find({})
+    const firstUser = users[0]
+
+    if (!firstUser) {
+        return response.status(400).json({ error: 'no users found' })
+    }
+
+    let blog = new Blog({...request.body, user: firstUser._id})
+    firstUser.blogs = firstUser.blogs.concat(blog._id)
+
+    await firstUser.save()
 
     if (!blog.title || !blog.url) { //SHould be checked with mongoose validation tbh, but that breaks the tests
         return response.status(400).json({ error: 'title missing' })
@@ -37,6 +50,8 @@ blogsRouter.post('/', async (request, response) => {
     if (!blog.likes) {
         blog.likes = 0
     }
+
+    //console.log(blog)
 
     try {
       const result = await blog.save()

@@ -20,6 +20,15 @@ blogsRouter.get('/:id', async (request, response) => {
 })
 
 blogsRouter.delete('/:id', async (request, response) => {
+    const user = await authHelper.getAuthenticatedUser(request)
+    const blog = await Blog.findById(request.params.id)
+    if (!user || !blog) { return response.status(400).json({ error: 'Not authenticated' })}
+    console.log("User: ", user)
+    console.log("Blog: ", blog)
+    const authUserId = user._id.toString()
+    const blogUserId = blog.user.toString()
+    if (authUserId !== blogUserId) { return response.status(400).json({ error: 'Authenticated user trying to delete unowned blog' }) }
+
     await Blog.findByIdAndDelete(request.params.id)
     response.status(204).end()
 })

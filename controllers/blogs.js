@@ -1,4 +1,5 @@
 const logger = require('../util/logger')
+const authHelper = require('../util/auth_helper')
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
 const User = require('../models/user')
@@ -30,18 +31,17 @@ blogsRouter.put('/:id', async (request, response) => {
 })
 
 blogsRouter.post('/', async (request, response) => {
+    const user = await authHelper.getAuthenticatedUser(request)
+    console.log("User received", user)
 
-    const users = await User.find({})
-    const firstUser = users[0]
-
-    if (!firstUser) {
-        return response.status(400).json({ error: 'no users found' })
+    if (!user) {
+        return response.status(400).json({ error: 'Not authenticated' })
     }
 
-    let blog = new Blog({...request.body, user: firstUser._id})
-    firstUser.blogs = firstUser.blogs.concat(blog._id)
+    let blog = new Blog({...request.body, user: user._id})
+    user.blogs = user.blogs.concat(blog._id)
 
-    await firstUser.save()
+    await user.save()
 
     if (!blog.title || !blog.url) { //SHould be checked with mongoose validation tbh, but that breaks the tests
         return response.status(400).json({ error: 'title missing' })

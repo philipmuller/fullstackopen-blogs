@@ -10,6 +10,7 @@ const tokenExtractor = (request, response, next) => {
 }
 
 const userExtractor = async (request, response, next) => {
+    console.log('Extracting user')
     const user = await auth_helper.getAuthenticatedUser(request)
     if (user) {
         request.user = user

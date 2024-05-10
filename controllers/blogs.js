@@ -32,8 +32,28 @@ blogsRouter.delete('/:id', async (request, response) => {
 })
 
 blogsRouter.put('/:id', async (request, response) => {
-    const blog = request.body
-    const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, { new: true })
+    console.log('PUT request received')
+    const user = request.user
+    const blogToUpdate = await Blog.findById(request.params.id)
+    const updates = request.body
+
+    if (!user) { return response.status(401).json({ error: 'Not authenticated' })}
+    if (!blogToUpdate) { return response.status(404).json({ error: 'Blog not found' })}
+    if (!updates) { return response.status(400).json({ error: 'No updates provided' })}
+
+    console.log('User:', user)
+    console.log('Blog:', blogToUpdate)
+    console.log('Updates:', updates)
+
+    const update =  {
+        title: updates.title, 
+        author: updates.author, 
+        url: updates.url, 
+        likes: updates.likes
+    }
+
+    const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, update, { new: true }).populate('user', { username: 1, name: 1 })
+    console.log('Updated blog:', updatedBlog)
     response.json(updatedBlog)
 })
 

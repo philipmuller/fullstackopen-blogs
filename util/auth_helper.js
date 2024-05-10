@@ -15,11 +15,13 @@ function decodeToken(token) {
 }
 
 async function getAuthenticatedUser(request) {
+    console.log('Getting authenticated user')
     const token = getTokenFrom(request)
     if (!token) { return null }
-
+    console.log('Token:', token)
     const decodedToken = decodeToken(token)
     if (!decodedToken.id) { return null }
+    console.log('Decoded token:', decodedToken)
     
     const user = await User.findById(decodedToken.id)
     return user

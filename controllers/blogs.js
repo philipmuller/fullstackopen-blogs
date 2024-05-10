@@ -22,12 +22,10 @@ blogsRouter.get('/:id', async (request, response) => {
 blogsRouter.delete('/:id', async (request, response) => {
     const user = request.user //using middleware to get user
     const blog = await Blog.findById(request.params.id)
-    if (!user || !blog) { return response.status(400).json({ error: 'Not authenticated' })}
-    console.log("User: ", user)
-    console.log("Blog: ", blog)
+    if (!user || !blog) { return response.status(401).json({ error: 'Not authenticated' })}
     const authUserId = user._id.toString()
     const blogUserId = blog.user.toString()
-    if (authUserId !== blogUserId) { return response.status(400).json({ error: 'Authenticated user trying to delete unowned blog' }) }
+    if (authUserId !== blogUserId) { return response.status(401).json({ error: 'Authenticated user trying to delete unowned blog' }) }
 
     await Blog.findByIdAndDelete(request.params.id)
     response.status(204).end()
@@ -41,10 +39,9 @@ blogsRouter.put('/:id', async (request, response) => {
 
 blogsRouter.post('/', async (request, response) => {
     const user = request.user //using middleware to get user
-    console.log("User received", user)
 
     if (!user) {
-        return response.status(400).json({ error: 'Not authenticated' })
+        return response.status(401).json({ error: 'Not authenticated' })
     }
 
     let blog = new Blog({...request.body, user: user._id})
@@ -59,8 +56,6 @@ blogsRouter.post('/', async (request, response) => {
     if (!blog.likes) {
         blog.likes = 0
     }
-
-    //console.log(blog)
 
     try {
       const result = await blog.save()

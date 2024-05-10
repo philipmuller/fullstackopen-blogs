@@ -9,16 +9,42 @@ const helper = require('./test_helper')
 
 const api = supertest(app)
 
+const superUser = { username: 'root', password: 'sekret', name: 'Superuser' }
+const markuUser = { username: 'marku', password: 'markusecret', name: 'Marko' }
+
+const authenticate = async (user) => {
+    const authUser = user || superUser
+    const response = await api
+        .post('/api/login')
+        .send({ username: 'root', password: 'sekret' })
+
+    return response.body.token
+}
+
 beforeEach(async () => {
     await Blog.deleteMany({})
     await User.deleteMany({})
 
-    const user = new User({ username: 'root', password: 'sekret', name: 'Superuser' })
-    await user.save()
+    await api
+        .post('/api/users')
+        .send(superUser)
 
-    for (let blog of helper.initialBlogs) {
-        let blogObject = new Blog({ ...blog, user: user._id })
-        await blogObject.save()
+    await api
+        .post('/api/users')
+        .send(markuUser)
+
+    const superToken = await authenticate(superUser)
+    const markuToken = await authenticate(markuUser)
+
+    for (let [index, blog] of helper.initialBlogs.entries()) {
+        let authToken = superToken
+        if (index % 2 !== 0) {
+            authToken = markuToken
+        }
+        await api
+            .post('/api/blogs')
+            .set('Authorization', `Bearer ${authToken}`)
+            .send(blog)
     }
 })
 
@@ -42,6 +68,20 @@ describe("Server", () => {
         assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
     })
 
+    test('adding a blog without authentication returns 401 unauthorized', async () => {
+        const newBlog = {
+            title: 'async/await simplifies making async calls',
+            author: 'Univeristy of Helsinki',
+            url: 'https://fullstackopen.com/en/part3/saving_data_to_mongo_db',
+            likes: 100
+        }
+
+        await api
+            .post('/api/blogs')
+            .send(newBlog)
+            .expect(401)
+    })
+
     test('a valid blog can be added ', async () => {
         const newBlog = {
           title: 'async/await simplifies making async calls',
@@ -49,9 +89,12 @@ describe("Server", () => {
           url: 'https://fullstackopen.com/en/part3/saving_data_to_mongo_db',
           likes: 100
         }
+
+        const token = await authenticate()
       
         await api
           .post('/api/blogs')
+          .set('Authorization', `Bearer ${token}`)
           .send(newBlog)
           .expect(201)
           .expect('Content-Type', /application\/json/)
@@ -70,8 +113,11 @@ describe("Server", () => {
           url: 'https://www.dislikedguy.com'
         }
 
+        const token = await authenticate()
+
         await api
           .post('/api/blogs')
+          .set('Authorization', `Bearer ${token}`)
           .send(newBlog)
           .expect(201)
           .expect('Content-Type', /application\/json/)
@@ -88,8 +134,11 @@ describe("Server", () => {
             likes: 1
         }
 
+        const token = await authenticate()
+
         await api
             .post('/api/blogs')
+            .set('Authorization', `Bearer ${token}`)
             .send(newBlog)
             .expect(400)
     })
@@ -101,8 +150,11 @@ describe("Server", () => {
             likes: 1
         }
 
+        const token = await authenticate()
+
         await api
             .post('/api/blogs')
+            .set('Authorization', `Bearer ${token}`)
             .send(newBlog)
             .expect(400)
     })
@@ -113,9 +165,12 @@ describe("Server", () => {
           url: "https://www.coolguy.com",
           likes: 1
         }
-      
+
+        const token = await authenticate()
+
         await api
           .post('/api/blogs')
+          .set('Authorization', `Bearer ${token}`)
           .send(newBlog)
           .expect(400)
       
@@ -145,10 +200,13 @@ describe("Server", () => {
 
     test("deleting a blog by ID works", async () => {
         const blogs = await helper.blogsInDb()
-        const blog = blogs[0]
+        const blog = blogs[0] //superuser created this blog
+
+        const token = await authenticate(superUser)
 
         await api
             .delete(`/api/blogs/${blog.id}`)
+            .set('Authorization', `Bearer ${token}`)
             .expect(204)
 
         const blogsAtEnd = await helper.blogsInDb()

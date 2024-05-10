@@ -11,19 +11,15 @@ function getTokenFrom(request) {
 
 function decodeToken(token) {
     const decoded = jwt.verify(token, process.env.SECRET)
-    console.log("Decoded token", decoded)
     return decoded
 }
 
 async function getAuthenticatedUser(request) {
     const token = getTokenFrom(request)
     if (!token) { return null }
-    console.log("Token received", token)
 
     const decodedToken = decodeToken(token)
     if (!decodedToken.id) { return null }
-    console.log("Decoded token", decodedToken)
-    console.log("Decoded token id", decodedToken.id)
     
     const user = await User.findById(decodedToken.id)
     return user

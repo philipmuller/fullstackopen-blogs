@@ -1,5 +1,6 @@
 const express = require('express')
 const config = require('./util/config')
+const middleware = require('./util/middleware')
 require('express-async-errors')
 const app = express()
 const cors = require('cors')
@@ -14,6 +15,7 @@ mongoose.connect(mongoUrl)
 
 app.use(cors())
 app.use(express.json())
+app.use(middleware.tokenExtractor)
 
 app.use('/api/blogs', blogsRouter)
 app.use('/api/users', userRouter)

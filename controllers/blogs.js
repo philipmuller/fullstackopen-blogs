@@ -31,6 +31,10 @@ blogsRouter.put('/:id', async (request, response) => {
 })
 
 blogsRouter.post('/', async (request, response) => {
+  //these two lines are not needed, they are just here to verify the middleware works
+    const middlewareToken = request.token
+    console.log("Middleware token: ", middlewareToken)
+
     const user = await authHelper.getAuthenticatedUser(request)
     console.log("User received", user)
 

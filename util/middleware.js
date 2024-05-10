@@ -9,6 +9,16 @@ const tokenExtractor = (request, response, next) => {
     next()
 }
 
+const userExtractor = async (request, response, next) => {
+    const user = await auth_helper.getAuthenticatedUser(request)
+    if (user) {
+        request.user = user
+    }
+
+    next()
+}
+
 module.exports = {
-    tokenExtractor
+    tokenExtractor,
+    userExtractor
 }

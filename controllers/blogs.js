@@ -20,7 +20,7 @@ blogsRouter.get('/:id', async (request, response) => {
 })
 
 blogsRouter.delete('/:id', async (request, response) => {
-    const user = await authHelper.getAuthenticatedUser(request)
+    const user = request.user //using middleware to get user
     const blog = await Blog.findById(request.params.id)
     if (!user || !blog) { return response.status(400).json({ error: 'Not authenticated' })}
     console.log("User: ", user)
@@ -40,11 +40,7 @@ blogsRouter.put('/:id', async (request, response) => {
 })
 
 blogsRouter.post('/', async (request, response) => {
-  //these two lines are not needed, they are just here to verify the middleware works
-    const middlewareToken = request.token
-    console.log("Middleware token: ", middlewareToken)
-
-    const user = await authHelper.getAuthenticatedUser(request)
+    const user = request.user //using middleware to get user
     console.log("User received", user)
 
     if (!user) {

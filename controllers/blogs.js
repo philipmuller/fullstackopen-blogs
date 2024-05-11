@@ -58,6 +58,7 @@ blogsRouter.put('/:id', async (request, response) => {
 })
 
 blogsRouter.post('/', async (request, response) => {
+    logger.info('POST request received')
     const user = request.user //using middleware to get user
 
     if (!user) {
@@ -69,6 +70,8 @@ blogsRouter.post('/', async (request, response) => {
 
     await user.save()
 
+    logger.info('Blog:', blog)
+
     if (!blog.title || !blog.url) { //SHould be checked with mongoose validation tbh, but that breaks the tests
         return response.status(400).json({ error: 'title missing' })
     }
@@ -79,9 +82,12 @@ blogsRouter.post('/', async (request, response) => {
 
     try {
       const result = await blog.save()
-      logger.info(result)
-      response.status(201).json(result)
-    } catch {
+      logger.info("Result", result)
+      const populatedResult = await Blog.findById(result._id).populate('user', { username: 1, name: 1 })
+      logger.info(populatedResult)
+      response.status(201).json(populatedResult)
+    } catch(error) {
+        logger.error(error)
       return response.status(400).json({ error: 'something went wrong' })
     }
 })

@@ -227,8 +227,11 @@ describe("Server", () => {
             likes: 789
         }
 
+        const token = await authenticate(superUser)
+
         await api
             .put(`/api/blogs/${blog.id}`)
+            .set('Authorization', `Bearer ${token}`)
             .send(updatedBlog)
             .expect(200)
 
